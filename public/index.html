@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      
+      /* Custom Scrollbar Styles */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 5px;
+        transition: background 0.2s ease;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      
+      /* For Firefox */
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #888 #f1f1f1;
+      }
+      
+      .titlebar {
+        height: 30px;
+        background: #f5f5f5;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        -webkit-app-region: drag;
+        user-select: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+      }
+      
+      .titlebar-drag-region {
+        flex: 1;
+        height: 100%;
+      }
+      
+      .window-controls {
+        display: flex;
+        align-items: center;
+        height: 30px;
+        -webkit-app-region: no-drag;
+      }
+      
+      .control-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 46px;
+        height: 30px;
+        border: none;
+        background: transparent;
+        color: #666;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      
+      .control-button:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+      
+      .control-button.close:hover {
+        background-color: #e81123;
+        color: white;
+      }
+      
+      .control-button span {
+        line-height: 1;
+      }
+      
+      #app {
+        margin-top: 30px;
+        height: calc(100vh - 30px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="titlebar">
+      <div class="titlebar-drag-region"></div>
+      <div class="window-controls">
+        <button id="minimize-btn" class="control-button minimize">
+          <span>─</span>
+        </button>
+        <button id="maximize-btn" class="control-button maximize">
+          <span>□</span>
+        </button>
+        <button id="close-btn" class="control-button close">
+          <span>×</span>
+        </button>
+      </div>
+    </div>
+    
+    <noscript>
+      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+    
+    <script>
+      // Debug information
+      console.log('Window controls script loaded');
+      
+      // Direct implementation of window controls
+      function setupWindowControls() {
+        console.log('Setting up window controls');
+        
+        // Try to get the ipcRenderer directly
+        let ipcRenderer;
+        try {
+          // First try to get it from the window.electronAPI
+          if (window.electronAPI) {
+            console.log('Using window.electronAPI');
+            // We'll use the existing API
+          } 
+          // Then try to get it from require
+          else if (window.require) {
+            console.log('Using window.require');
+            ipcRenderer = window.require('electron').ipcRenderer;
+            
+            // Create the API if it doesn't exist
+            if (!window.electronAPI) {
+              window.electronAPI = {
+                minimizeWindow: () => ipcRenderer.send('window-minimize'),
+                maximizeWindow: () => ipcRenderer.send('window-maximize'),
+                closeWindow: () => ipcRenderer.send('window-close')
+              };
+            }
+          }
+        } catch (e) {
+          console.error('Error setting up window controls:', e);
+        }
+        
+        // Add event listeners
+        document.getElementById('minimize-btn').addEventListener('click', () => {
+          console.log('Minimize button clicked');
+          if (window.electronAPI) {
+            window.electronAPI.minimizeWindow();
+          } else if (ipcRenderer) {
+            ipcRenderer.send('window-minimize');
+          } else {
+            console.error('Cannot minimize: No IPC available');
+          }
+        });
+        
+        document.getElementById('maximize-btn').addEventListener('click', () => {
+          console.log('Maximize button clicked');
+          if (window.electronAPI) {
+            window.electronAPI.maximizeWindow();
+          } else if (ipcRenderer) {
+            ipcRenderer.send('window-maximize');
+          } else {
+            console.error('Cannot maximize: No IPC available');
+          }
+        });
+        
+        document.getElementById('close-btn').addEventListener('click', () => {
+          console.log('Close button clicked');
+          if (window.electronAPI) {
+            window.electronAPI.closeWindow();
+          } else if (ipcRenderer) {
+            ipcRenderer.send('window-close');
+          } else {
+            console.error('Cannot close: No IPC available');
+          }
+        });
+      }
+      
+      // Wait for the window to be fully loaded
+      window.addEventListener('load', () => {
+        console.log('Window fully loaded');
+        setupWindowControls();
+      });
+    </script>
+  </body>
+</html>
